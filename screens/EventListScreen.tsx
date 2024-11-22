@@ -42,6 +42,12 @@ const EventListScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>GoKaptureHub - Events</Text>
+      <Text
+        style={{
+          textAlign: 'center',
+        }}>
+        Registration
+      </Text>
       <FlatList
         data={events}
         renderItem={renderEventItem}
