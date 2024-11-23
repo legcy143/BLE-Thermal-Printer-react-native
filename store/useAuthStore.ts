@@ -9,60 +9,56 @@ type User = {
 };
 
 type AuthStoreStates = {
-  loading: boolean;
-  user: User;
-  isAuthenticated: boolean;
-  setUser: (user: User) => void;
+  isFetchLoading: boolean;
+  isLoginLoading: boolean;
+  userLoginPayload: User;
+  setUserLoginPayload: (data: Partial<User>) => void;
+  user: User | null;
   getUser: () => void;
   login: () => void;
-  checkIsAuthenticated: () => void;
 };
 
-const useAuthStore = create<AuthStoreStates>(set => ({
-  user: {
+const useAuthStore = create<AuthStoreStates>((set, get) => ({
+  user: null,
+  isFetchLoading: true,
+  isLoginLoading: false,
+  userLoginPayload: {
     email: '',
     password: '',
   },
-  loading: false,
-  isAuthenticated: false,
-  setUser: user => set({user}),
+
+  setUserLoginPayload: data => {
+    let prev = get().userLoginPayload;
+    set({userLoginPayload: {...prev, ...data}});
+  },
+
   getUser: async () => {
     try {
+      set({isFetchLoading: true});
       const {data} = await api.get('/user');
-      set({loading: false, isAuthenticated: true});
+      set({user: data?.data});
     } catch (e: any) {
       showToast('error', e.response.data.message);
-      set({loading: false, isAuthenticated: false});
       removeData('token');
+    } finally {
+      set({isFetchLoading: false});
     }
   },
   login: async () => {
-    set({loading: true});
     try {
-      const {email, password} = useAuthStore.getState().user;
-      console.log(email, password);
-      const {data} = await api.post('/auth/login', {email, password});
+      set({isLoginLoading: true});
+      const userLoginPayload = get().userLoginPayload;
+      const {data} = await api.post('/auth/login', userLoginPayload);
       set({
-        loading: false,
-        isAuthenticated: true,
-        user: {email: '', password: ''},
+        user: userLoginPayload,
       });
       showToast('success', 'Login Successful');
       storeData('token', data.data.token);
     } catch (e: any) {
       showToast('error', e.response.data.message);
-      set({loading: false, isAuthenticated: false});
       removeData('token');
-    }
-  },
-  checkIsAuthenticated: async () => {
-    try {
-      const {data} = await api.get('/user');
-      console.log(data);
-      set({loading: false, isAuthenticated: true});
-    } catch (e: any) {
-      set({loading: false, isAuthenticated: false});
-      removeData('token');
+    } finally {
+      set({isLoginLoading: false});
     }
   },
 }));

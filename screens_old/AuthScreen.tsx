@@ -8,6 +8,9 @@ import useAuthStore from '../store/useAuthStore';
 
 const AuthScreen = () => {
   const {isAuthenticated, loading, login, user, setUser} = useAuthStore();
+  if(loading){
+    return <Text>Loading...</Text>
+  }
   return (
     <KeyboardHideWrapper>
       <View
