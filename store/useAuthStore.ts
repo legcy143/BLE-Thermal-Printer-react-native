@@ -14,8 +14,9 @@ type AuthStoreStates = {
   userLoginPayload: User;
   setUserLoginPayload: (data: Partial<User>) => void;
   user: User | null;
-  getUser: () => void;
-  login: () => void;
+  getUser: () => Promise<boolean>;
+  login: () => Promise<boolean>;
+  logout: () => Promise<boolean>;
 };
 
 const useAuthStore = create<AuthStoreStates>((set, get) => ({
@@ -37,9 +38,11 @@ const useAuthStore = create<AuthStoreStates>((set, get) => ({
       set({isFetchLoading: true});
       const {data} = await api.get('/user');
       set({user: data?.data});
+      return true;
     } catch (e: any) {
       showToast('error', e.response.data.message);
       removeData('token');
+      return false;
     } finally {
       set({isFetchLoading: false});
     }
@@ -54,11 +57,22 @@ const useAuthStore = create<AuthStoreStates>((set, get) => ({
       });
       showToast('success', 'Login Successful');
       storeData('token', data.data.token);
+      return true;
     } catch (e: any) {
       showToast('error', e.response.data.message);
       removeData('token');
+      return false;
     } finally {
       set({isLoginLoading: false});
+    }
+  },
+  logout: async () => {
+    try {
+      removeData('token');
+      set({user:null})
+      return true;
+    } catch (error) {
+      return false;
     }
   },
 }));
